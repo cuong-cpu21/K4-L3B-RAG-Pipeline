@@ -1,5 +1,6 @@
 """
 Task 4 — Chunking, embedding và indexing.
+Author / Maintainer: Nguyễn Mạnh Cường (2A202602650) - Retrieval Engineer
 
 Hướng dẫn:
     1. Đọc toàn bộ Markdown trong data/standardized/.

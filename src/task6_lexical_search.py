@@ -1,5 +1,6 @@
 """
-Task 6 — Lexical search bằng BM25.
+Task 6 — Lexical search bằng BM25 và Bilingual Query Expansion.
+Author / Maintainer: Nguyễn Mạnh Cường (2A202602650) - Retrieval Engineer
 
 Dùng cùng corpus chunks với Task 5. BM25 phù hợp với từ khóa chính xác, mã tài
 liệu và tên riêng. Output phải theo SearchResult và sort score giảm dần.
@@ -26,6 +27,35 @@ def get_or_load_corpus() -> list[dict]:
     return CORPUS
 
 
+BILINGUAL_SYNONYMS: dict[str, list[str]] = {
+    "vé": ["ticket", "tickets", "admission", "pass"],
+    "giá": ["price", "cost", "fee", "gbp"],
+    "tiền": ["fee", "deposit", "cost", "refund", "reimbursed"],
+    "hủy": ["cancel", "cancellation", "refund", "non-refundable"],
+    "hoàn": ["refund", "reimbursed", "cancellation"],
+    "cắm": ["camp", "camping", "campsite", "tents"],
+    "trại": ["campsite", "camping", "field"],
+    "lều": ["tent", "tents", "gazebo", "gazebos"],
+    "cấm": ["prohibited", "banned", "not permitted", "confiscated"],
+    "vật": ["items", "substances"],
+    "rượu": ["alcohol", "drinks", "challenge 21", "bar"],
+    "bia": ["alcohol", "drinks", "bar"],
+    "tuổi": ["age", "18", "21", "16", "under"],
+    "chó": ["dog", "dogs", "guide dog", "assistance dog"],
+    "trợ": ["assistant", "pa", "support", "scheme"],
+    "lý": ["assistant", "pa"],
+    "khuyết": ["access", "accessible", "disability", "disabled"],
+    "tật": ["disability", "accessible", "access"],
+    "xe": ["bus", "train", "shuttle", "transport", "cycling"],
+    "buýt": ["bus", "shuttle", "station"],
+    "tàu": ["train", "rail", "castle cary"],
+    "thanh": ["payment", "balance", "deposit"],
+    "toán": ["payment", "balance", "deposit", "paid"],
+    "chủ": ["sunday", "ticket"],
+    "nhật": ["sunday", "ticket"],
+}
+
+
 def build_bm25_index(corpus: list[dict]) -> BM25Okapi:
     """Tạo BM25 index từ corpus chunks."""
     tokenized = [item["content"].lower().split() for item in corpus]
@@ -33,7 +63,7 @@ def build_bm25_index(corpus: list[dict]) -> BM25Okapi:
 
 
 def lexical_search(query: str, top_k: int = 10) -> list[dict]:
-    """Trả về BM25 SearchResult theo score giảm dần."""
+    """Trả về BM25 SearchResult theo score giảm dần, tích hợp Bilingual Query Expansion."""
     if not query.strip() or top_k <= 0:
         return []
 
@@ -41,10 +71,18 @@ def lexical_search(query: str, top_k: int = 10) -> list[dict]:
     if not corpus:
         return []
 
-    tokens = query.lower().split()
-    if not tokens:
+    raw_tokens = query.lower().split()
+    if not raw_tokens:
         return []
 
+    # Bilingual Query Expansion: mở rộng từ khóa tiếng Việt sang từ vựng tiếng Anh trong corpus
+    expanded_tokens = list(raw_tokens)
+    for token in raw_tokens:
+        clean_token = token.strip(",.?!:;\"'")
+        if clean_token in BILINGUAL_SYNONYMS:
+            expanded_tokens.extend(BILINGUAL_SYNONYMS[clean_token])
+
+    tokens = expanded_tokens
     bm25 = build_bm25_index(corpus)
     scores = bm25.get_scores(tokens)
 

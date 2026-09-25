@@ -1,5 +1,6 @@
 """
 Task 5 — Semantic search.
+Author / Maintainer: Nguyễn Mạnh Cường (2A202602650) - Retrieval Engineer
 
 Embed query bằng chính hàm của Task 4, query ChromaDB và đổi cosine distance
 thành similarity. Output phải theo SearchResult, sort giảm dần và không quá top_k.
