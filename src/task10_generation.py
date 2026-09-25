@@ -59,24 +59,33 @@ def call_llm(system_prompt: str, user_message: str) -> str:
     provider = os.getenv("LLM_PROVIDER", LLM_PROVIDER).lower()
 
     if provider == "gemini":
+        import time
         from google import genai
         api_key = os.getenv("GEMINI_API_KEY", "")
         client = genai.Client(api_key=api_key)
         preferred_model = os.getenv("LLM_MODEL") or "gemini-3.5-flash"
-        candidate_models = [preferred_model, "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-flash-latest"]
+        
+        # Danh sách mô hình dự phòng không trùng lặp
+        raw_candidates = [preferred_model, "gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"]
+        candidate_models = list(dict.fromkeys(raw_candidates))
 
         full_prompt = f"{system_prompt}\n\n{user_message}"
         for model_name in candidate_models:
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=full_prompt,
-                )
-                if response.text and response.text.strip():
-                    return response.text.strip()
-            except Exception as exc:
-                print(f"Model {model_name} failed: {exc}, trying next fallback...")
-                continue
+            for attempt in range(2):
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=full_prompt,
+                    )
+                    if response.text and response.text.strip():
+                        return response.text.strip()
+                except Exception as exc:
+                    err_msg = str(exc)
+                    if ("503" in err_msg or "UNAVAILABLE" in err_msg) and attempt == 0:
+                        time.sleep(1.0)
+                        continue
+                    print(f"Model {model_name} failed: {exc}, trying next fallback...")
+                    break
         return "Tôi không thể xác minh thông tin này từ nguồn hiện có."
 
     elif provider == "openai":
