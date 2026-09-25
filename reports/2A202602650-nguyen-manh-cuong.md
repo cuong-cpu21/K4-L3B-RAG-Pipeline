@@ -17,19 +17,24 @@
 | **Task 4 — Chunking, Embedding & Indexing** | Thiết kế bộ chia văn bản đệ quy `RecursiveCharacterTextSplitter` (chunk_size=500, chunk_overlap=50), kết nối Cloud Embedding API qua Google Gemini (`gemini-embedding-2` chuẩn 3072 chiều) với batching và exponential backoff retry; khởi tạo persistent ChromaDB vectorstore với cosine distance và upsert toàn bộ corpus chunks. | `src/task4_chunking_indexing.py`, `chroma_db/` | Done |
 | **Task 5 — Semantic Search** | Xây dựng hàm tìm kiếm ngữ nghĩa Dense Retrieval dùng chung embedding pipeline với Task 4, chuyển đổi cosine distance thành cosine similarity `(1.0 - distance)`, chuẩn hóa `SearchResult` contract, sắp xếp điểm giảm dần và giới hạn `top_k`. | `src/task5_semantic_search.py` | Done |
 | **Task 6 — Lexical Search & Query Expansion** | Xây dựng bộ chỉ mục từ khóa `BM25Okapi` trên cùng tập chunks, tích hợp thuật toán Bilingual Query Expansion (ánh xạ từ khóa tiếng Việt sang từ vựng tiếng Anh trong corpus Glastonbury), xử lý tie-breaker term frequency cho corpus nhỏ để đảm bảo thứ tự xếp hạng ổn định. | `src/task6_lexical_search.py` | Done |
-| **Integration & Test Validation** | Chạy toàn bộ test hợp đồng `tests/test_contracts.py` và acceptance test `tests/test_acceptance.py`, phối hợp kiểm thử tích hợp hai luồng Dense + Sparse. | `tests/test_contracts.py`, `tests/test_acceptance.py` | Done |
+| **Task 7 — Reciprocal Rank Fusion (RRF)** | Cài đặt thuật toán Reciprocal Rank Fusion chuẩn công thức $RRF(d) = \sum \frac{1}{k + rank}$ (với hằng số làm mịn $k=60$); thực hiện khử trùng lặp theo ID, gán nhãn `retrieval_method="hybrid"`, bảo đảm non-mutating input (shallow copy dict item) và sắp xếp giảm dần theo RRF score. | `src/task7_reranking.py` | Done |
+| **Integration & Test Validation** | Chạy toàn bộ test hợp đồng `tests/test_contracts.py` và acceptance test `tests/test_acceptance.py`, phối hợp kiểm thử tích hợp hai luồng Dense + Sparse và kiểm chứng độ chính xác RRF. | `tests/test_contracts.py`, `tests/test_acceptance.py` | Done |
 
 ---
 
 ## Quyết định kỹ thuật quan trọng
 
-Mô tả hai quyết định kỹ thuật tôi trực tiếp tham gia:
+Mô tả các quyết định kỹ thuật tôi trực tiếp tham gia:
 
 1. **Quyết định: Sử dụng Cloud Embedding (`gemini-embedding-2`) với OpenAI-compatible endpoint thay vì load mô hình `sentence-transformers` cục bộ**  
    **Lý do/evidence:** Thư viện `sentence-transformers` đi kèm PyTorch có dung lượng tải và chiếm dụng RAM rất lớn (>2.5 GB), dễ gây lỗi ECONNRESET và làm chậm đáng kể thời gian khởi động trên môi trường phát triển của nhóm. Việc chuyển sang endpoint Gemini API qua OpenAI SDK giúp project siêu nhẹ, giảm thời gian build môi trường xuống 0, và vector biểu diễn 3072 chiều có khả năng thấu hiểu ngữ nghĩa đa ngôn ngữ (Anh - Việt) vượt trội so với các model local nhỏ.  
    **Trade-off:** Phụ thuộc vào kết nối mạng và giới hạn rate-limit của API, do đó tôi đã triển khai thêm cơ chế batching 20 chunks/lần và retry tự động với exponential backoff.
 
-2. **Quyết định: Bổ sung Bilingual Synonym Expansion (mở rộng truy vấn song ngữ) trực tiếp vào BM25 Lexical Search**  
+2. **Quyết định: Áp dụng thuật toán Reciprocal Rank Fusion (RRF, $k=60$) thay vì cộng điểm trực tiếp (Linear Score Combination)**  
+   **Lý do/evidence:** Điểm Cosine Similarity của Dense search nằm trong khoảng $[0.0, 1.0]$, trong khi điểm BM25 của Lexical search có giá trị tự do trong khoảng $[0.0, +\infty)$ tùy thuộc vào tần số từ và độ dài văn bản. Việc chuẩn hóa min-max thường rất nhạy cảm với outlier. Thuật toán RRF giải quyết triệt để vấn đề này bằng cách chỉ quan tâm đến thứ hạng (rank) của từng tài liệu trong từng danh sách. Với $k=60$ (chuẩn thực nghiệm của Cormack et al.), một tài liệu xuất hiện ở thứ hạng cao trong cả hai danh sách sẽ có điểm RRF vượt trội so với tài liệu chỉ đứng đầu ở một danh sách duy nhất.  
+   **Trade-off:** RRF score chỉ phản ánh thứ tự ưu tiên tương đối, không mang ý nghĩa xác suất hay độ tương đồng tuyệt đối, do đó tuyệt đối không dùng điểm RRF để quyết định fallback (fallback phải dùng điểm Cosine gốc của Dense search).
+
+3. **Quyết định: Bổ sung Bilingual Synonym Expansion (mở rộng truy vấn song ngữ) trực tiếp vào BM25 Lexical Search**  
    **Lý do/evidence:** Bộ corpus thu thập về Glastonbury 2025 hoàn toàn bằng tiếng Anh trong khi người dùng có thể nhập câu hỏi bằng tiếng Việt (ví dụ: *"giá vé"*, *"phí hủy"*, *"đồ bị cấm"*). BM25 thuần túy dựa trên so khớp chuỗi token chính xác nên nếu hỏi tiếng Việt sẽ nhận điểm 0 tuyệt đối và không đóng góp được gì cho RRF. Bằng cách bổ sung từ điển ánh xạ ngữ nghĩa cốt lõi (ví dụ: `vé` -> `ticket/pass`, `cấm` -> `prohibited/banned`, `hủy` -> `cancel/refund`), BM25 có thể ghim chính xác các đoạn văn bản chứa số liệu và quy chế then chốt, giúp tăng Context Recall của pipeline từ 78.1% lên 91.2%.  
    **Trade-off:** Cần duy trì và cập nhật bộ từ điển đồng nghĩa phù hợp với ngữ cảnh domain của sự kiện.
 
@@ -38,14 +43,14 @@ Mô tả hai quyết định kỹ thuật tôi trực tiếp tham gia:
 ## Kiểm thử và kết quả
 
 - **Test hoặc query đã dùng:**
-  - Bộ kiểm thử hợp đồng: `pytest tests/test_contracts.py -q` (15/15 bài test pass, kiểm tra tính toàn vẹn của chunk ID, metadata preservation, score ordering, và retrieval method).
+  - Bộ kiểm thử hợp đồng: `pytest tests/test_contracts.py -q` (15/15 bài test pass, kiểm tra tính toàn vẹn của chunk ID, metadata preservation, score ordering, RRF rank fusion và retrieval method).
   - Bộ kiểm thử nghiệm thu: `pytest tests/test_acceptance.py -q` (5/5 bài test pass).
   - Kiểm thử query mẫu:
     + Query tiếng Anh: `"Sunday ticket cancellation refund"` -> BM25 và Semantic search đều truy xuất chính xác đoạn văn bản có mức phạt `£25` và hạn chót `9th May 2025`.
-    + Query tiếng Việt: `"những đồ vật bị cấm mang vào lễ hội"` -> Nhờ Query Expansion, BM25 kích hoạt các token `prohibited, banned, confiscated` và trả về đúng chunk quy định cấm đồ thủy tinh, flycam, pháo sáng.
+    + Query tiếng Việt: `"những đồ vật bị cấm mang vào lễ hội"` -> Nhờ Query Expansion, BM25 kích hoạt các token `prohibited, banned, confiscated` và trả về đúng chunk quy định cấm đồ thủy tinh, flycam, pháo sáng; RRF đưa chunk này lên vị trí Top 1 với điểm số cao nhất.
 - **Lỗi đã phát hiện và cách xử lý:**
   1. *Lỗi IDF bằng 0 khi corpus nhỏ hoặc token xuất hiện ở 50% tài liệu:* Trong BM25 chuẩn của `rank_bm25`, khi $N=2$ và $n=1$, giá trị IDF bị âm hoặc triệt tiêu về 0 khiến thứ tự sắp xếp bị ngẫu nhiên. Tôi đã thêm term frequency adjustment (`0.01 * match_count`) để đảm bảo tài liệu chứa từ khóa luôn có điểm cao hơn và giữ đúng invariant sắp xếp giảm dần.
-  2. *Lỗi lệch chiều vector giữa query và database:* Đảm bảo Task 5 gọi chính xác hàm `embed_texts()` của Task 4, bảo đảm kích thước vector đồng nhất 3072 chiều.
+  2. *Lỗi mutate danh sách gốc trong RRF:* Trong quá trình fusion, việc gán trực tiếp `item["score"] = ...` sẽ làm thay đổi điểm cosine gốc của danh sách Dense search đầu vào. Tôi đã dùng `dict(item)` để tạo bản sao trước khi gán điểm RRF, bảo toàn tính bất biến của dữ liệu gốc để Task 9 đọc được điểm cosine chuẩn cho nhánh fallback.
 
 ---
 

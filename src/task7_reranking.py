@@ -1,5 +1,6 @@
 """
-Task 7 — Reciprocal Rank Fusion.
+Task 7 — Reciprocal Rank Fusion (RRF).
+Author / Maintainer: Nguyễn Mạnh Cường (2A202602650) - Retrieval Engineer
 
 RRF gộp nhiều bảng xếp hạng mà không cộng trực tiếp cosine score với BM25
 score. Công thức: RRF(d) = sum(1 / (k + rank)), rank bắt đầu từ 1.
