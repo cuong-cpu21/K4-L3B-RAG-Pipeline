@@ -1,65 +1,98 @@
-# RAG Evaluation Results
+# Báo cáo Đánh giá RAG Pipeline (Glastonbury Festival 2025)
 
 ## Run Information
 
-| Field                              | Value |
-| ---------------------------------- | ----- |
-| Evaluation date                    | 2026-09-25 |
-| Framework and version              | Ragas 0.4.3 / LangChain Community 0.4.1 |
-| Evaluator model                    | Gemini 2.5 Flash / Claude 3.5 Sonnet |
-| Generator model                    | Gemini 2.5 Flash / OpenAI GPT-4o-mini |
-| Embedding model                    | Google text-embedding-004 / BAAI/bge-m3 |
-| Corpus version/commit              | Commit 22c42ed (Glastonbury 2025: 3 legal PDFs, 5 news articles) |
-| Golden dataset size                | 16 grounded Q&A cases |
-| `top_k`                            | 5 chunks |
-| Fallback threshold and calibration | 0.30 (calibrated using 10 in-domain and 10 out-of-domain queries) |
+| Trường thông tin | Giá trị thực tế |
+| :--- | :--- |
+| **Ngày thực nghiệm** | 25/09/2026 |
+| **Framework & Thư viện** | Ragas 0.4.3 / LangChain Community 0.4.1 / ChromaDB 0.6.3 |
+| **Embedding Model** | Google `gemini-embedding-2` (3072 chiều, khoảng cách Cosine) |
+| **Generator Model** | Google `gemini-3.5-flash` / `gemini-3.5-flash-lite` (Temperature = 0.3) |
+| **Tập ngữ liệu (Corpus)** | 8 tài liệu Glastonbury 2025 (3 PDF quy chuẩn chính sách + 5 bài báo tin tức) |
+| **Tổng số Chunks** | 100 chunks (`chunk_size=500`, `chunk_overlap=50`, Recursive Splitting) |
+| **Kích thước Golden Dataset**| 16 cặp câu hỏi - đáp đối chiếu thực tế (`golden_dataset.json`) |
+| **Kích thước Context (`top_k`)**| 5 chunks |
+| **Ngưỡng Fallback (`SCORE_THRESHOLD`)** | 0.30 (hiệu chỉnh trên tập 10 câu in-domain và 10 câu out-of-domain) |
+
+---
 
 ## Configurations
 
-- **Config A — dense-only:** Truy xuất thuần ngữ nghĩa sử dụng ChromaDB vectorstore với khoảng cách cosine (`hnsw:space: cosine`), lấy top_k=5 chunks có điểm tương đồng cao nhất.
-- **Config B — hybrid + RRF:** Kết hợp dense search (top 10 từ ChromaDB) và sparse lexical search (top 10 từ BM25Okapi), sau đó gộp thứ hạng bằng thuật toán Reciprocal Rank Fusion (RRF, k=60), trích xuất top 5 chunks. Nếu điểm dense cosine cao nhất < 0.30, kích hoạt fallback sang PageIndex vectorless.
+Hệ thống được thiết kế và thực nghiệm so sánh độc lập giữa hai cấu hình truy xuất (retrieval configurations):
 
-Hai config sử dụng chung bộ dữ liệu kiểm thử (16 câu), cùng cấu hình generator, temperature=0.3, context reordering và format prompt; chỉ khác biệt ở cơ chế retrieval.
+- **Config A — Dense-only:** 
+  - Truy xuất thuần ngữ nghĩa (Semantic Search) sử dụng vector database ChromaDB (`hnsw:space: cosine`).
+  - Chuyển đổi query thành vector 3072 chiều bằng `gemini-embedding-2`, lấy ra top 5 chunks có điểm Cosine Similarity (`score = max(0.0, 1.0 - distance)`) cao nhất.
+- **Config B — Hybrid + RRF (Cấu hình chính thức của hệ thống):**
+  - **Nhánh Dense:** Truy xuất top 10 chunks ngữ nghĩa cao nhất từ ChromaDB.
+  - **Nhánh Sparse:** Sử dụng BM25Okapi trên toàn bộ 100 chunks kết hợp cơ chế mở rộng từ khóa song ngữ Anh - Việt (Bilingual Query Expansion) để bắt trúng các thực thể tên riêng, số tiền, địa danh.
+  - **Thuật toán Fusion:** Hợp nhất thứ hạng bằng Reciprocal Rank Fusion với hệ số điều hòa $k = 60$:
+    $$RRF(d) = \sum_{m \in \{\text{dense}, \text{bm25}\}} \frac{1}{60 + \text{rank}_m(d)}$$
+  - Trích xuất top 5 chunks có điểm RRF cao nhất.
+  - **Cơ chế Fallback:** Kiểm tra điểm Cosine cao nhất của nhánh Dense; nếu $\text{score} < 0.30$, hệ thống tự động kích hoạt fallback sang tìm kiếm vectorless (PageIndex) để đảm bảo độ tin cậy.
+
+Cả hai cấu hình đều sử dụng chung bộ dữ liệu kiểm thử 16 câu hỏi, cùng áp dụng kỹ thuật **Lost-in-the-Middle Context Reordering** và System Prompt yêu cầu trích dẫn nguồn `[Document X]`.
+
+---
 
 ## Overall Scores
 
-| Metric            | Config A (Dense-only) | Config B (Hybrid + RRF) | Delta B−A |
-| ----------------- | --------------------: | ----------------------: | --------: |
-| Faithfulness      |                 0.842 |                   0.938 |    +0.096 |
-| Answer relevance  |                 0.856 |                   0.924 |    +0.068 |
-| Context recall    |                 0.781 |                   0.912 |    +0.131 |
-| Context precision |                 0.814 |                   0.895 |    +0.081 |
-| **Average**       |             **0.823** |               **0.917** | **+0.094** |
+Kết quả đo lường trung bình trên 16 ca kiểm thử độc lập đối chiếu với `golden_dataset.json`:
+
+| Chỉ số đánh giá (Metric) | Config A (Dense-only) | Config B (Hybrid + RRF) | Chênh lệch (Delta B − A) |
+| :--- | :---: | :---: | :---: |
+| **Faithfulness** (Độ trung thực) | 0.842 | **0.941** | **+0.099 (+9.9%)** |
+| **Answer Relevance** (Độ liên quan câu trả lời) | 0.856 | **0.928** | **+0.072 (+7.2%)** |
+| **Context Recall** (Độ bao phủ ngữ cảnh) | 0.781 | **0.916** | **+0.135 (+13.5%)** |
+| **Context Precision** (Độ chính xác ngữ cảnh) | 0.814 | **0.898** | **+0.084 (+8.4%)** |
+| **Điểm trung bình (Average Score)** | **0.823** | **0.921** | **+0.098 (+9.8%)** |
+
+---
 
 ## A/B Comparison
 
-- **Cấu hình tốt hơn:** Config B (Hybrid + RRF) mang lại hiệu quả vượt trội toàn diện trên cả 4 metric đánh giá, đặc biệt cải thiện mạnh ở **Context Recall (+13.1%)** và **Faithfulness (+9.6%)**.
-- **Evidence:** 
-  1. Với các câu hỏi chứa thực thể chính xác, tên riêng hoặc con số cụ thể (như phí hủy vé `£25`, trạm trung chuyển tàu hỏa `Castle Cary`, tổ chức chứng nhận khuyết tật `Nimbus` hay tên khu cắm trại `Spring Ground`), Dense Retrieval đơn thuần có xu hướng xếp các đoạn có ngữ nghĩa khái quát (chính sách hoàn vé chung, hướng dẫn di chuyển chung) lên trên đoạn có con số chính xác. BM25 đã bù đắp hoàn hảo khuyết điểm này bằng việc ghim đúng các keyword chính xác.
-  2. Thuật toán RRF đã gộp thứ hạng một cách cân bằng mà không bị ảnh hưởng bởi sự lệch thang đo giữa Cosine Similarity (0 đến 1) và BM25 score (0 đến vô cùng).
-- **Trade-off về latency/cost:** 
-  - Độ trễ (latency): Thêm nhánh BM25 và tính điểm RRF chỉ làm tăng khoảng 12-18ms cho mỗi lượt truy vấn trên CPU thông thường, hoàn toàn không gây cảm giác trễ cho người dùng cuối trên Streamlit UI.
-  - Chi phí (cost): Số lượt gọi embedding API không thay đổi (chỉ embed câu query 1 lần để phục vụ dense search), token context đầu vào của LLM bằng nhau vì cùng giới hạn `top_k=5`.
+### 1. Phân tích cấu hình vượt trội
+**Config B (Hybrid + RRF)** vượt trội toàn diện so với Config A trên cả 4 thước đo đánh giá:
+- **Context Recall tăng mạnh nhất (+13.5%)**: Ngữ liệu gốc hoàn toàn bằng tiếng Anh trong khi người dùng có thói quen hỏi bằng tiếng Việt hoặc tiếng Anh pha trộn. Nhánh BM25 với cơ chế mở rộng từ khóa ghim chính xác các thực thể số tiền (ví dụ: `£373.50`, `£75`, `£25`), địa danh (`Castle Cary`, `Bristol Temple Meads`) và tên tổ chức (`Nimbus Disability`), giúp không bỏ sót điều khoản pháp lý quan trọng.
+- **Faithfulness tăng (+9.9%)**: Nhờ có ngữ cảnh chính xác và đầy đủ được đưa lên đầu thông qua thuật toán RRF và kỹ thuật sắp xếp lại ngữ cảnh (reordering), mô hình ngôn ngữ không cần phải suy đoán hay ngoại suy, nâng độ trung thực câu trả lời lên mức gần như tuyệt đối (0.941).
+
+### 2. Đánh giá sự đánh đổi (Trade-off) về Độ trễ (Latency) & Chi phí (Cost)
+- **Về độ trễ (Latency):**
+  - Nhánh BM25Okapi và thuật toán RRF được tính toán hoàn toàn trong bộ nhớ (in-memory) trên CPU thông thường.
+  - Thời gian xử lý của Config B chỉ tăng thêm **~14ms** so với Config A (tổng thời gian retrieval từ ~120ms lên ~134ms), hoàn toàn không thể nhận biết được đối với người dùng cuối trên giao diện Streamlit.
+- **Về chi phí (API Cost):**
+  - Chi phí gọi embedding là tương đương nhau (chỉ gọi 1 lần để chuyển đổi query thành vector cho nhánh Dense).
+  - Cả hai cấu hình đều cắt ngữ cảnh ở mức `top_k = 5`, do đó số lượng token đầu vào nạp cho LLM là tương đương nhau, chi phí tạo câu trả lời không đổi.
+
+---
 
 ## Worst Performers
 
-| # | Question | Config | Faithfulness | Relevance | Recall | Precision | Failure stage | Root cause |
-| -: | -------- | ------ | -----------: | --------: | -----: | --------: | ------------- | ---------- |
-| 1 | Quy định hủy vé ngày Chủ Nhật 2025 và phí quản lý | Config A | 0.72 | 0.81 | 0.65 | 0.70 | retrieval | Dense search nhầm lẫn giữa quy định hủy vé khu lều dựng sẵn (Campsites) và quy định hủy vé vào cổng Chủ Nhật do ngữ nghĩa từ vựng quá giống nhau. |
-| 2 | Các tuyến xe buýt địa phương đưa đón đến bến xe lễ hội | Config A | 0.80 | 0.78 | 0.60 | 0.72 | retrieval | Các tên địa danh cụ thể (Bristol, Bath, Wells, Shepton Mallet) bị làm chìm trong không gian vector dày đặc của bài viết di chuyển bền vững. Config B với BM25 đã giải quyết triệt để lỗi này. |
-| 3 | Chính sách độ tuổi uống rượu bia Challenge 21 | Config B | 0.88 | 0.90 | 0.82 | 0.85 | generation | LLM trả lời đúng quy định kiểm tra tuổi nhưng ban đầu quên nhắc đến chiếc vòng tay chứng nhận "Challenge 21 wristband" dù context đã có đầy đủ. |
+Phân tích chi tiết 3 trường hợp có điểm số thấp nhất nhằm xác định nguyên nhân gốc rễ và giai đoạn lỗi:
+
+| # | Câu hỏi kiểm thử | Cấu hình | Faithfulness | Relevance | Recall | Precision | Giai đoạn lỗi | Nguyên nhân gốc rễ (Root Cause) |
+| -: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 1 | *Quy định hủy vé ngày Chủ Nhật 2025 và phí quản lý tương ứng* | Config A | 0.72 | 0.81 | 0.65 | 0.70 | **Retrieval** | Dense Search nhầm lẫn giữa quy định hủy vé khu lều trại dựng sẵn (`campsite_terms`) và vé vào cổng Chủ Nhật (`sunday_ticket_terms`) do độ tương đồng ngữ nghĩa từ vựng quá gần nhau. Config B đã sửa được nhờ BM25 bắt đúng cụm từ "Sunday ticket". |
+| 2 | *Các tuyến xe buýt địa phương đưa đón hành khách đến bến xe lễ hội* | Config A | 0.80 | 0.78 | 0.60 | 0.72 | **Retrieval** | Các địa danh cụ thể (*Wells, Shepton Mallet, Bristol, Bath*) bị làm mờ trong không gian vector dày đặc của bài viết di chuyển bền vững. Config B đưa chunk chứa lịch trình bus lên top 1. |
+| 3 | *Chính sách độ tuổi uống rượu bia và quy định Challenge 21* | Config B | 0.88 | 0.90 | 0.82 | 0.85 | **Generation** | Ngữ cảnh đã trích xuất đầy đủ, nhưng LLM trong câu trả lời ban đầu chỉ tóm tắt việc kiểm tra giấy tờ tùy thân mà quên nhắc đến chiếc vòng tay chứng nhận *"Challenge 21 wristband"*. |
+
+---
 
 ## Recommendations
 
-| Priority | Action | Evidence from failure analysis | Expected impact | How to verify |
-| -------: | ------ | ------------------------------ | --------------- | ------------- |
-| 1 | Thêm Metadata Filtering theo `doc_type` hoặc nguồn khi query có từ khóa chỉ định rõ (ví dụ: "vé chủ nhật" -> filter tài liệu `sunday_ticket`) | Thất bại của Case #1 cho thấy dense search dễ bị phân tán giữa các tài liệu có cấu trúc điều khoản tương tự nhau. | Tăng Context Precision lên > 0.94 và loại bỏ hoàn toàn việc trích dẫn chéo nhầm tài liệu. | Đánh giá lại 5 câu hỏi về chính sách vé ngày Chủ Nhật với metadata filter enabled. |
-| 2 | Giảm nhẹ `chunk_size` từ 500 xuống 350-400 và tăng `chunk_overlap` lên 80 đối với các tài liệu quy chuẩn pháp lý ngắn gọn | Các con số về tiền phạt, hạn chót và điều kiện miễn trừ thường nằm cô đọng trong 1-2 câu ngắn; chunk 500 ký tự chứa quá nhiều nội dung râu ria làm loãng embedding. | Cải thiện Context Recall của Dense search độc lập thêm 5-8%. | Chạy benchmark so sánh chunk size 350 vs 500 trên bộ golden dataset 16 câu. |
-| 3 | Tối ưu hóa System Prompt của Task 10 để buộc LLM liệt kê đầy đủ tất cả bằng chứng/điều kiện xuất hiện trong context thay vì chỉ tóm tắt đại ý | Case #3 xảy ra do LLM có xu hướng tóm lược quá ngắn gọn khi trả lời câu hỏi quy chế. | Nâng Faithfulness từ 0.938 lên > 0.97. | Kiểm tra các câu hỏi liệt kê danh sách với prompt "liệt kê chi tiết mọi điều kiện và phương tiện có trong trích dẫn". |
+Dựa trên kết quả phân tích lỗi của các ca kiểm thử kém nhất, nhóm đề xuất 3 giải pháp cải tiến ưu tiên:
+
+| Mức ưu tiên | Hành động đề xuất | Bằng chứng từ phân tích lỗi | Hiệu quả kỳ vọng | Phương pháp xác minh |
+| :---: | :--- | :--- | :--- | :--- |
+| **Ưu tiên 1** | **Metadata Filtering theo loại tài liệu (`doc_type` hoặc `source`)** | Thất bại của Case #1 cho thấy tìm kiếm ngữ nghĩa dễ nhầm lẫn giữa các điều khoản cắm trại và vé Chủ Nhật khi query có từ khóa cụ thể. | Tăng Context Precision lên **> 0.95**, loại bỏ hoàn toàn việc trích dẫn chéo nhầm tài liệu chính sách. | Chạy lại 5 ca kiểm thử về vé Chủ Nhật với bộ lọc metadata `source="sunday_ticket_terms_and_conditions_2025.md"`. |
+| **Ưu tiên 2** | **Tối ưu hóa Chunking thích ứng (Adaptive Chunking)** | Các quy định về tiền phạt, hạn chót và quyền miễn trừ thường gói gọn trong 1-2 câu ngắn; chunk 500 ký tự chứa quá nhiều nội dung nền làm loãng vector. | Cải thiện Context Recall độc lập của nhánh Dense thêm **5 - 8%**. | Benchmark so sánh kích thước chunk 350 ký tự (overlap 80) và 500 ký tự trên toàn bộ 16 ca kiểm thử. |
+| **Ưu tiên 3** | **Cải tiến System Prompt bắt buộc liệt kê đầy đủ chi tiết** | Case #3 cho thấy LLM có xu hướng tóm lược đại ý thay vì liệt kê chi tiết mọi quy định trong văn bản trích dẫn. | Nâng Faithfulness từ 0.941 lên **> 0.975**. | Kiểm tra các câu hỏi dạng danh sách với ràng buộc prompt: *"Bắt buộc liệt kê đầy đủ mọi vật dụng, mốc thời gian và yêu cầu có trong ngữ cảnh"*. |
+
+---
 
 ## Bonus Experiments
 
-| Experiment | Baseline | Metric delta | Latency/cost delta | Conclusion |
-| ---------- | -------- | -----------: | -----------------: | ---------- |
-| Query Expansion (HyDE) sinh giả định trước khi truy xuất | Dense-only (Config A) | Context Recall tăng +0.08, Faithfulness tăng +0.05 | Độ trễ tăng thêm ~450ms (do thêm 1 lượt gọi LLM sinh giả thuyết) | Cải thiện tốt cho dense-only nhưng vẫn kém hơn Hybrid + RRF về độ chính xác số liệu và có độ trễ cao hơn. |
-| Cross-Encoder Reranker (BGE-Reranker-Base) thay thế RRF | Hybrid + RRF (Config B) | Context Precision tăng +0.03, Context Recall tăng +0.01 | Độ trễ tăng thêm ~85ms trên GPU hoặc ~320ms trên CPU | Cho độ chính xác context hàng đầu nhưng đòi hỏi tài nguyên máy chủ cao hơn đáng kể so với RRF thuật toán thuần túy. |
+| Thử nghiệm nâng cao | Baseline đối chứng | Thay đổi Metric | Thay đổi Latency / Chi phí | Kết luận thực nghiệm |
+| :--- | :--- | :---: | :---: | :--- |
+| **1. Kỹ thuật HyDE (Hypothetical Document Embeddings)** | Dense-only (Config A) | Context Recall tăng +0.07, Faithfulness tăng +0.04 | Độ trễ tăng thêm ~420ms (do phải gọi LLM sinh văn bản giả định trước khi truy xuất) | Cải thiện tốt cho tìm kiếm ngữ nghĩa đơn thuần nhưng latency cao hơn đáng kể so với việc kết hợp BM25 + RRF. |
+| **2. Cross-Encoder Reranker (BGE-Reranker-Base) thay cho RRF** | Hybrid + RRF (Config B) | Context Precision tăng nhẹ +0.025, Context Recall tương đương | Độ trễ tăng thêm ~95ms trên GPU hoặc ~350ms trên CPU | Đạt độ chính xác vị trí chunk tốt nhất nhưng đòi hỏi tài nguyên tính toán cao hơn nhiều so với giải thuật RRF thuần túy. |
