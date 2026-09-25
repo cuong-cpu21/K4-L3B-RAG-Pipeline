@@ -1,0 +1,82 @@
+[
+  {
+    "question": "Giá vé trọn gói cuối tuần Glastonbury 2025 là bao nhiêu và hạn thanh toán số tiền còn lại là khi nào?",
+    "expected_answer": "Vé vào cổng trọn gói cuối tuần Glastonbury 2025 có giá 373,50 bảng Anh cộng thêm 5 bảng Anh phí đặt vé. Người mua đặt cọc 75 bảng Anh mỗi vé trong đợt mở bán tháng 11/2024, và số tiền còn lại phải được thanh toán trong tuần đầu tiên của tháng 4/2025 (từ 09:00 BST Thứ Ba ngày 01/04/2025 đến 23:59 BST Thứ Hai ngày 07/04/2025).",
+    "expected_context": "General Admission full weekend tickets (valid from Wednesday 25th June to Sunday 29th June) for Glastonbury 2025 cost GBP 373.50 + a GBP 5 booking fee. You could book up to 6 tickets per transaction by paying a deposit of GBP 75 per person when tickets went on sale. The remaining balance will then be payable in the first week of April 2025 (from 09:00 BST Tuesday 1st April - 23:59 BST Monday 7th April)."
+  },
+  {
+    "question": "Ai đủ điều kiện tham gia chương trình vé trợ lý cá nhân (PA Ticket Scheme) và hạn nộp hồ sơ là khi nào?",
+    "expected_answer": "Những khán giả không thể tham dự lễ hội nếu không có sự hỗ trợ của trợ lý cá nhân (PA) và có biểu tượng +1 trên thẻ Nimbus Access Card hoặc thẻ digital Glastonbury Access Pass sẽ đủ điều kiện nhận 1 vé miễn phí cho PA. Hạn chót nộp hồ sơ đăng ký là ngày 30 tháng 4 năm 2025.",
+    "expected_context": "Festival goers unable to attend the Festival without the support of a Personal Assistant (PA) can apply to use the PA Ticket Scheme, which includes a complimentary ticket for your PA at no extra cost. Festival goers must have the +1 requirement on their Access Card or digital Glastonbury Access Pass. The closing date is 30th April."
+  },
+  {
+    "question": "Quy định về số người và số lượng lều tối đa tại khu cắm trại tiếp cận (Accessible Campsite) ở Spring Ground là gì?",
+    "expected_answer": "Khán giả sử dụng khu cắm trại tiếp cận tại Spring Ground được ở cùng tối đa 3 người khác (tổng cộng không quá 4 người, tính cả PA và trẻ em từ 13 tuổi trở lên). Mỗi nhóm 4 người chỉ được mang tối đa 2 lều. Nghiêm cấm hoàn toàn việc dựng lều bạt gazebo, nếu dựng sẽ bị ban tổ chức dỡ bỏ.",
+    "expected_context": "Due to limited space and the demand on the facilities in the campsite, access customers staying in the accessible campsite can have a maximum of 3 other people stay with them. This number includes PAs' and children 13 years and over. We ask that a group of 4 brings a maximum of 2 tents. Gazebos are strictly not allowed and will be removed."
+  },
+  {
+    "question": "Khán giả mang chó hỗ trợ hoặc dẫn đường đến lễ hội cần đáp ứng điều kiện gì và phải cắm trại ở đâu?",
+    "expected_answer": "Chó dẫn đường hoặc hỗ trợ phải được chứng nhận và huấn luyện bởi thành viên của IGDF hoặc ADI, đồng thời có biểu tượng 'Assistance Dog' trên thẻ Access Card/Pass. Chủ chó bắt buộc phải cắm trại tại khu cắm trại tiếp cận hoặc khu xe campervan tiếp cận, và có trách nhiệm dọn dẹp vệ sinh chất thải của chó.",
+    "expected_context": "The festival recognises accredited guide dogs & assistance dogs which have been trained by a member of the International Guide Dog Federation (IGDF) or Assistance Dogs International (ADI). Must have the Assistance Dog symbol on Access Card. Owners must camp in the accessible campsite or accessible campervan field and are responsible for hygiene and clearing waste."
+  },
+  {
+    "question": "Quy định hủy vé và hoàn tiền đối với vé ngày Chủ Nhật (Sunday Ticket) 2025 như thế nào?",
+    "expected_answer": "Vé ngày Chủ Nhật không được hoàn tiền sau ngày 09/05/2025 và không được phép chuyển nhượng trong mọi trường hợp. Nếu hủy vé trước 23:59 ngày 09/05/2025, người mua sẽ được hoàn lại tiền vé trừ đi 25 bảng Anh phí quản lý. Phí đặt vé và cước bưu điện không được hoàn lại.",
+    "expected_context": "Sunday Tickets for Glastonbury Festival 2025 are non-refundable after 9th May 2025 and always non-transferable. If you cancel your booking by 23:59 on 9th May 2025 you will be reimbursed the value of your ticket less the GBP 25 administration fee. After 23:59 9th May 2025, no refunds will be made other than in the event of the cancellation of the Festival."
+  },
+  {
+    "question": "Vé ngày Chủ Nhật của lễ hội Glastonbury 2025 có giá trị vào cổng từ mấy giờ?",
+    "expected_answer": "Vé ngày Chủ Nhật chỉ có giá trị vào cổng từ 08:00 sáng Chủ Nhật, ngày 29 tháng 6 năm 2025.",
+    "expected_context": "Sunday Tickets are only valid for entry from 08:00 on Sunday 29th June 2025."
+  },
+  {
+    "question": "Những vật dụng nào bị cấm mang vào các khu cắm trại và khuôn viên lễ hội Glastonbury 2025?",
+    "expected_answer": "Các vật dụng bị cấm bao gồm: đồ thủy tinh (chai nước hoa, gương, hũ thực phẩm, chai rượu thủy tinh), dao và vũ khí, pháo hoa, pháo sáng, đèn trời, đốt nhựa, máy phát điện, bút laser, flycam/drone, thuốc lá điện tử dùng một lần (disposable vapes), kim tuyến cơ thể (body glitter), bóng cười nitrous oxide, ma túy và chất kích thích trái phép, loa thùng sound system và động vật (trừ chó dẫn đường).",
+    "expected_context": "Fireworks, Chinese/flying lanterns, drones, flares, the burning of plastics, generators, glass containers, potential weapons, portable laser equipment including laser pens or any illegal or offensive items or substances are not permitted at Official Campsites and will be confiscated. Disposable vapes, body glitter, and nitrous oxide are prohibited."
+  },
+  {
+    "question": "Chính sách Challenge 21 về việc bán đồ uống có cồn tại lễ hội quy định những gì?",
+    "expected_answer": "Lễ hội áp dụng chính sách 'Challenge 21' tại tất cả các quầy bar: bất kỳ ai trông dưới 21 tuổi đều sẽ bị từ chối phục vụ rượu bia trừ khi chứng minh được mình đã đủ 18 tuổi bằng cách xuất trình giấy tờ tùy thân có ảnh hợp lệ hoặc đeo vòng tay 'Challenge 21'.",
+    "expected_context": "Glastonbury Festival operates a 'Challenge 21' policy for alcohol sales. If you look under 21, you will not be served alcohol unless you can prove you are over 18 - by presenting ID, or by wearing a 'Challenge 21' wristband."
+  },
+  {
+    "question": "Quy định đối với trẻ em dưới 16 tuổi khi tham gia lễ hội Glastonbury là gì?",
+    "expected_answer": "Bất kỳ ai dưới 16 tuổi bắt buộc phải có người lớn chịu trách nhiệm (từ 18 tuổi trở lên) đi cùng và giám sát toàn thời gian trong suốt lễ hội. Trẻ dưới 16 tuổi không được phép vào, ra hoặc quay lại khu vực lễ hội một mình mà không có người lớn đi kèm.",
+    "expected_context": "Anyone under the age of 16 must be accompanied to the Festival by a responsible adult (aged 18 or over, who would usually be the parent, carer, legal guardian or other adult entrusted with the care of that child) who accepts full responsibility and full supervision, at all times, for all under 16s attending under their supervision."
+  },
+  {
+    "question": "Phương tiện di chuyển công cộng nào thân thiện nhất để đến lễ hội và có dịch vụ xe buýt đưa đón nào từ ga tàu?",
+    "expected_answer": "Đi xe đạp và tàu hỏa là hai phương tiện thân thiện với môi trường nhất (tàu hỏa giảm 67% lượng khí thải carbon so với lái xe ô tô). Ga đường sắt chính là Castle Cary, và ban tổ chức cung cấp dịch vụ xe buýt đưa đón miễn phí kết nối thẳng giữa ga Castle Cary và bến xe buýt của lễ hội cho tất cả khán giả có vé.",
+    "expected_context": "Cycling and public transport are the greenest ways to arrive at the Festival. Taking the train is approximately 67% less polluting than driving. Castle Cary station is the primary rail gateway. A free, regular shuttle bus service operates between Castle Cary station and the Festival bus station for all ticket-holders."
+  },
+  {
+    "question": "Dịch vụ Bike to Glasto hỗ trợ người đi xe đạp đến lễ hội như thế nào?",
+    "expected_answer": "Dịch vụ Bike to Glasto cung cấp nơi gửi xe đạp miễn phí an toàn, khu cắm trại riêng biệt chỉ dành cho người đi xe đạp có trang bị vòi tắm nước nóng, cùng các bản đồ và lộ trình đạp xe không có ô tô phối hợp cùng tổ chức Sustrans.",
+    "expected_context": "The 'Bike to Glasto' scheme offers free, secure bike lock-ups and a dedicated cyclists-only campsite equipped with showers. Route maps and cycling corridors are curated with Sustrans."
+  },
+  {
+    "question": "Ứng dụng chính thức Glastonbury 2025 do đối tác nào phát triển và có những tính năng nổi bật gì?",
+    "expected_answer": "Ứng dụng chính thức do Vodafone hợp tác phát triển, có các tính năng nổi bật gồm: lên lịch biểu diễn cá nhân hóa (Personal Line-up Planner) cảnh báo trùng giờ, bản đồ GPS tương tác để định vị sân khấu và lều trại, chia sẻ vị trí trực tiếp (Live Location Sharing) với nhóm bạn bè, đồng bộ Spotify, nghe đài Worthy FM và tính năng My Highlights đếm bước chân.",
+    "expected_context": "The official Glastonbury 2025 mobile application, powered by Vodafone, includes: Personal Line-up Planner, Interactive GPS Map, Live Location Sharing, Worthy FM & Spotify integration, and My Highlights step tracker."
+  },
+  {
+    "question": "Khu lều Vodafone Connect & Charge cung cấp những dịch vụ sạc pin và kết nối nào cho khán giả?",
+    "expected_answer": "Lều Vodafone Connect & Charge (nằm đối diện khu Leftfield) cung cấp dịch vụ sạc điện thoại miễn phí cho tất cả khán giả bất kể nhà mạng, cho thuê pin sạc dự phòng với quyền đổi lấy pin đầy miễn phí mỗi ngày một lần (hoàn tiền đặt cọc khi trả pin cuối lễ hội), cấp eSIM 5G miễn phí trải nghiệm 7 ngày và phủ sóng 5G tăng cường khắp trang trại.",
+    "expected_context": "Located opposite the Leftfield area, the Vodafone Connect & Charge tent provides free mobile charging for all attendees regardless of network, portable battery pack rental with one free exchange per day, free 7-day 5G data eSIM trials, and boosted 5G network coverage."
+  },
+  {
+    "question": "Các đợt mở bán vé chính thức Glastonbury 2025 diễn ra vào thời gian nào trong tháng 11/2024?",
+    "expected_answer": "Gói vé kèm xe buýt (Ticket + Coach travel) mở bán lúc 18:00 GMT Thứ Năm ngày 14/11/2024. Vé phổ thông trọn gói (General Admission tickets) mở bán lúc 09:00 GMT Chủ Nhật ngày 17/11/2024.",
+    "expected_context": "Combined Coach Tickets went on sale at 6pm (GMT) on Thursday 14th November 2024. General admission tickets went on sale at 9am (GMT) on Sunday 17th November 2024."
+  },
+  {
+    "question": "Quy định về hoạt động thương mại và sử dụng hashtag trên mạng xã hội tại lễ hội Glastonbury như thế nào?",
+    "expected_answer": "Nghiêm cấm mọi hoạt động thương mại, quảng bá thương hiệu, tiếp thị du kích (ambush marketing) hoặc quay phim thương mại nếu không có văn bản chấp thuận trước của ban tổ chức. Khán giả được đăng bài cá nhân nhưng tuyệt đối không được sử dụng các hashtag tài trợ/thương mại như #ad, #gifted, #prinvite hoặc #thanksto(partner) kết hợp cùng hình ảnh lễ hội.",
+    "expected_context": "Commercial Activity means any commercial, promotional and trading activities (including but not limited to ambush marketing, sponsored or paid for social media posts, brand influencing). Hashtags such as #ad #gifted #prinvite or #thanksto(partner) are strictly prohibited from being used in conjunction with the Festival or Festival IP."
+  },
+  {
+    "question": "Hạn chót để nộp hồ sơ xin sử dụng các tiện ích hỗ trợ tiếp cận (Access Facilities) cho lễ hội 2025 là khi nào?",
+    "expected_answer": "Hạn chót nộp hồ sơ đăng ký tiện ích tiếp cận cho Glastonbury 2025 là ngày 30 tháng 4 năm 2025. Ban tổ chức khuyến nghị nộp càng sớm càng tốt sau khi đã đặt cọc vé để tránh hết chỗ tại các cơ sở vật chất.",
+    "expected_context": "The deadline for Access Applications for Glastonbury 2025 is the 30th April, however we would recommend people submit their Access Applications as early as possible after the ticket sale to avoid missing out on facilities."
+  }
+]
